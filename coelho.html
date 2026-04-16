@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Coelhinho Kids PRO</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* 🐰 FUNDO COM COELHOS E CENOURAS */
+body::before {
+  content: "🐰   🥕   🐰   🥕   🐰   🥕   🐰   🥕   🐰   🥕   🐰   🥕   🐰   🥕";
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  font-size: 50px;
+  line-height: 100px;
+  word-spacing: 40px;
+
+  color: rgba(255,255,255,0.7);
+
+  transform: rotate(-20deg);
+  filter: blur(4px);
+
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+
+  z-index: -1;
+}
+
+/* 📱 TELA */
+.phone {
+  width: 340px;
+  height: 640px;
+  border-radius: 30px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.header {
+  background: #4CAF50;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  font-weight: bold;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 10px;
+}
+
+.cell {
+  height: 65px;
+  border-radius: 12px;
+  font-size: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(#7ed957, #4CAF50);
+}
+
+/* CAMINHO */
+.trail {
+  background: #c2a679 !important;
+}
+
+/* ANIMAÇÕES */
+.bunny {
+  animation: hop 0.3s infinite alternate;
+}
+
+@keyframes hop {
+  from { transform: translateY(0); }
+  to { transform: translateY(-6px); }
+}
+
+.carrot {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* COMANDOS */
+.commands {
+  margin: 10px;
+  padding: 10px;
+  background: #fff;
+  border-radius: 10px;
+  height: 80px;
+  overflow-y: auto;
+}
+
+/* BOTÕES */
+.controls {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+button {
+  padding: 8px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  background: #4CAF50;
+  color: white;
+  font-size: 13px;
+}
+
+button span {
+  display: block;
+  font-size: 18px;
+}
+
+button:active {
+  transform: scale(0.9);
+}
+
+.reset {
+  background: red;
+}
+
+/* 🎉 MENSAGEM */
+.win {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  font-weight: bold;
+  display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="phone">
+
+  <div class="header">🐰 Pegue as cenouras!</div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="commands" id="cmds"></div>
+
+  <div class="controls">
+    <button onclick="add('⬆')"><span>⬆</span>CIMA</button>
+    <button onclick="add('➡')"><span>➡</span>DIREITA</button>
+    <button onclick="add('⬇')"><span>⬇</span>BAIXO</button>
+    <button onclick="add('⬅')"><span>⬅</span>ESQUERDA</button>
+    <button onclick="add('🥕')"><span>🥕</span>PEGAR</button>
+    <button class="reset" onclick="reset()">⟲ RESET</button>
+  </div>
+
+</div>
+
+<div class="win" id="win">
+  <b>Parabéns você ganhou, aperte o botão reset ou saia</b>
+</div>
+
+<script>
+let pos = {x:0, y:0};
+let fila = [];
+let executando = false;
+
+let cenourasInicial = [
+  {x:3,y:0},
+  {x:0,y:3},
+  {x:3,y:3}
+];
+
+let cenouras = JSON.parse(JSON.stringify(cenourasInicial));
+
+function draw(){
+  let grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  for(let y=0;y<4;y++){
+    for(let x=0;x<4;x++){
+      let c = document.createElement("div");
+      c.className="cell";
+
+      if(pos.x===x && pos.y===y){
+        c.innerHTML="🐰";
+        c.classList.add("bunny");
+      }
+      else if(cenouras.find(e=>e.x===x && e.y===y)){
+        c.innerHTML="🥕";
+        c.classList.add("carrot");
+      }
+
+      grid.appendChild(c);
+    }
+  }
+}
+
+function add(cmd){
+  fila.push(cmd);
+  document.getElementById("cmds").innerText = fila.join(" ");
+
+  if(!executando){
+    executar();
+  }
+}
+
+function executar(){
+  executando = true;
+
+  let loop = setInterval(()=>{
+    if(fila.length === 0){
+      clearInterval(loop);
+      executando = false;
+
+      if(cenouras.length === 0){
+        document.getElementById("win").style.display = "block";
+      }
+
+      return;
+    }
+
+    let cmd = fila.shift();
+
+    let index = pos.y * 4 + pos.x;
+    document.querySelectorAll(".cell")[index].classList.add("trail");
+
+    if(cmd==="⬆" && pos.y>0) pos.y--;
+    if(cmd==="⬇" && pos.y<3) pos.y++;
+    if(cmd==="➡" && pos.x<3) pos.x++;
+    if(cmd==="⬅" && pos.x>0) pos.x--;
+
+    if(cmd==="🥕"){
+      cenouras = cenouras.filter(e=> !(e.x===pos.x && e.y===pos.y));
+    }
+
+    draw();
+
+  }, 150);
+}
+
+function reset(){
+  pos = {x:0,y:0};
+  fila = [];
+  cenouras = JSON.parse(JSON.stringify(cenourasInicial));
+  document.getElementById("cmds").innerText="";
+  document.getElementById("win").style.display = "none";
+  executando = false;
+  draw();
+}
+
+draw();
+</script>
+
+</body>
+</html>
